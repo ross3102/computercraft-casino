@@ -1,0 +1,477 @@
+os.loadAPI("imglib")
+ 
+local COLORS = {colors.red,colors.black,colors.red,
+                colors.black,colors.red,colors.black,
+                colors.black,colors.red,colors.black,
+                colors.red,colors.black,colors.red}
+ 
+local NUMBERS = {5,2,10,4,8,6,1,11,3,7,12,9}
+ 
+local BALL = {}
+ 
+local WHEELS = {}
+local FRAMES = 30
+ 
+local TOP_MON = "top"
+local BOT_MON = "back"
+ 
+local top = peripheral.wrap(TOP_MON)
+top.setTextScale(0.5)
+local tw, th = top.getSize()
+local bot = peripheral.wrap(BOT_MON)
+bot.setTextScale(0.5)
+local bw, bh = bot.getSize()
+ 
+local CHIP = imglib.loadImg("/images/chip")
+local CHIP2 = imglib.loadImg("/images/chip2")
+local DMD = imglib.loadImg("/images/diamond")
+ 
+local history = {}
+ 
+function resetScreen(m)
+  local oldTerm = term.redirect(m)
+  local mw, mh = term.getSize()
+  paintutils.drawFilledBox(1,1,mw,mh,colors.green)
+  term.setCursorPos(1,1)
+  term.redirect(oldTerm)
+end
+ 
+function choose(l)
+  return l[math.ceil(math.random(table.getn(l)*5)/5)]
+end
+ 
+function pickupItem()
+  turtle.suck()
+  local itm = turtle.getItemDetail()
+  while itm do
+    if (itm.name == "ComputerCraft:disk") then
+      turtle.drop()
+      return true
+    else
+      turtle.dropDown()
+      turtle.suck()
+      itm = turtle.getItemDetail()
+    end
+  end
+  return false
+end
+ 
+function drawWheel(m, frame, x, y, ball)
+  if ball == nil then ball = true end
+  local r2 = 35
+  local nr = 4/5
+  local br = 14/25
+ 
+  local theta = (frame-1)*2*math.pi/FRAMES
+  imglib.centerImage(m,WHEELS[frame],x,y)
+ 
+  imglib.centerWord(m,"0",math.floor(x+nr*r2*math.cos(theta+math.pi/13)),math.floor(y-nr*r2*math.sin(theta+math.pi/13)/1.5),colors.white)
+  if ball and table.getn(history) > 0 and history[1] == 0 then
+    imglib.centerImage(m,BALL,math.floor(x+br*r2*math.cos(theta+math.pi/13)),math.floor(y-br*r2*math.sin(theta+math.pi/13)/1.5),colors.blue)
+  end
+  
+  
+  for i,v in ipairs(NUMBERS) do
+    imglib.centerWord(m,tostring(v),math.floor(x+nr*r2*math.cos(theta+(2*i+1)*math.pi/13)+0.5),math.floor(y-nr*r2*math.sin(theta+(2*i+1)*math.pi/13)/1.5+0.5),colors.white)
+    if ball and table.getn(history) > 0 and history[1] == v then
+      imglib.centerImage(m,BALL,math.floor(x+br*r2*math.cos(theta+(2*i+1)*math.pi/13)),math.floor(y-br*r2*math.sin(theta+(2*i+1)*math.pi/13)/1.5),colors.blue)
+    end
+  end
+end
+ 
+function startScreen()
+  bot.setBackgroundColor(colors.green)
+  bot.clear()
+  top.setBackgroundColor(colors.green)
+  top.clear()
+ 
+  local frame = 1
+ 
+  os.startTimer(0)
+  
+  while true do
+    event = { os.pullEvent() }
+    if event[1] == "disk" then
+      if pickupItem() then return
+      else os.startTimer(0.125)
+      end
+    elseif event[1] == "timer" then
+      os.startTimer(0.125)
+      
+      drawWheel(top,frame,tw/2,th/2)
+      
+      imglib.centerWord(top,"Insert",tw/2,th/2-2,colors.black)
+      imglib.centerWord(top,"Card",tw/2,th/2+4,colors.black)
+      
+      frame = frame - 1
+      if frame < 1 then frame = frame + 30 end
+    end
+  end
+end
+ 
+function drawBetScreen()
+  resetScreen(bot)
+ 
+  imglib.drawRect(bot,18,3,78,31,colors.yellow)
+ 
+  imglib.drawImage(bot,imglib.loadImg("/images/arc"),6,3)
+  imglib.centerWord(bot,"0",12,18,colors.white)
+ 
+  for i=0,3 do
+    imglib.centerRect(bot,i*15+25,8,14,9,COLORS[3*i+3])
+    imglib.centerWord(bot,tostring(3*i+3),i*15+25,8,colors.white)
+    imglib.centerRect(bot,i*15+25,18,14,9,COLORS[3*i+2])
+    imglib.centerWord(bot,tostring(3*i+2),i*15+25,18,colors.white)
+    imglib.centerRect(bot,i*15+25,28,14,9,COLORS[3*i+1])
+    imglib.centerWord(bot,tostring(3*i+1),i*15+25,28,colors.white)
+  end
+  for i=1,3 do
+    imglib.drawRect(bot,79,4+10*(i-1),16,9,colors.blue)
+  end
+  imglib.drawWord(bot,"2-1",81,6,colors.white)
+  imglib.drawWord(bot,"2-1",81,16,colors.white)
+  imglib.drawWord(bot,"2-1",81,26,colors.white)
+  
+  imglib.drawRect(bot,24,36,29,9,colors.black)
+  imglib.drawRect(bot,25,37,27,7,colors.white)
+  imglib.drawWord(bot,"Evens",26,38)
+  
+  imglib.drawRect(bot,54,36,23,9,colors.black)
+  imglib.drawRect(bot,55,37,21,7,colors.white)
+  imglib.drawWord(bot,"Odds",56,38)
+  
+  imglib.drawRect(bot,8,36,15,9,colors.black)
+  imglib.drawRect(bot,9,37,13,7,colors.white)
+  imglib.drawImage(bot,DMD,10,38,colors.black)
+  
+  imglib.drawRect(bot,78,36,15,9,colors.black)
+  imglib.drawRect(bot,79,37,13,7,colors.white)
+  imglib.drawImage(bot,DMD,80,38,colors.red)
+ 
+  imglib.drawRect(bot,37,46,27,7,colors.red)
+  imglib.centerWord(bot,"Reset",bw/2,49,colors.white)
+ 
+  imglib.drawRect(bot,1,bh-6,21,7,colors.red)
+  imglib.drawWord(bot,"Quit",2,bh-5,colors.white)
+ 
+  imglib.drawRect(bot,bw-19,bh-6,20,7,colors.lime)
+  imglib.drawWord(bot,"Spin",bw-18,bh-5,colors.white)
+end
+ 
+function closeTo(px, py, cx, cy, dx, dy)
+  dx = dx or 1
+  dy = dy or 1
+  return math.abs(px-cx) <= dx and math.abs(py-cy) <= dy
+end
+ 
+function onMainBoard(px, py)
+  return 19 <= px and px <= 77 and 4 <= py and py <= 32
+end
+ 
+function placeBets()
+  local bets = {}
+  local totalMoney = getCardValue()
+  local totalBet = 0
+  
+  function addBet(nums)
+    local s = ""
+    table.sort(nums)
+    for i,v in ipairs(nums) do
+      s = s .. tostring(v) .. ","
+    end
+    s = s:sub(1,s:len()-1)
+    local b = bets[s] or 0
+    if b == 10 then return b end
+    bets[s] = b + 1
+    totalBet = totalBet + 1
+    return b + 1
+  end
+  
+  function drawBet(b, x, y)
+    local oldTerm = term.redirect(bot)
+    term.setTextColor(colors.brown)
+    if b >= 10 then
+      imglib.centerImage(bot,CHIP2,x,y)
+      
+      term.setCursorPos(x-1,y-1)
+      term.setBackgroundColor(colors.yellow)
+      term.write(tostring(math.floor(b/10)))
+      term.setCursorPos(x+1,y+1)
+      term.write(tostring(b % 10))
+    else
+      imglib.centerImage(bot,CHIP,x,y)
+      term.setCursorPos(x,y)
+      term.setBackgroundColor(colors.yellow)
+      term.write(tostring(b))
+    end
+    term.redirect(oldTerm)
+  end
+ 
+  function drawPast()
+    imglib.centerWord(top,"Past",13,4)
+    imglib.centerWord(top,"Spins",13,10)
+    for i,v in ipairs(history) do
+      if v == 0 then
+        imglib.centerRect(top,13,9+8*i,12,7,colors.lime)
+      else
+        imglib.centerRect(top,13,9+8*i,12,7,COLORS[v])
+      end
+      imglib.centerWord(top,tostring(v),13,9+8*i,colors.white)
+    end
+  end
+  
+  resetScreen(top)
+  drawPast()
+ 
+  drawBetScreen()
+  
+  local frame = 1
+  local t0 = os.startTimer(0)
+  
+  while true do
+    event = { os.pullEvent() }
+    if event[1] == "timer" and event[2] == t0 then
+      t0 = os.startTimer(0.125)
+      
+      drawWheel(top,frame,62,th/2)
+      imglib.centerWord(top,tostring(totalMoney-totalBet).."$",62,th/2)
+      
+      frame = frame - 1
+      if frame < 1 then frame = frame + 30 end
+    elseif event[1] == "monitor_touch" then
+      side = event[2]
+      xPos = event[3]
+      yPos = event[4]
+      if side == BOT_MON then
+        if yPos >= bh - 6 then
+          if 37 <= xPos and xPos <= 64 then
+            bets = {}
+            totalBet = 0
+            drawBetScreen()
+          elseif xPos <= 22 then
+            return
+          elseif xPos >= bw - 19 and totalBet > 0 then
+            spin(frame, bets)
+            drawPast()
+            totalMoney = getCardValue()
+            if totalBet > totalMoney then
+              bets = {}
+              totalBet = 0
+              drawBetScreen()
+            end
+            t0 = os.startTimer(0)
+          end
+        elseif totalMoney > totalBet then
+          -- 0
+          if closeTo(xPos,yPos,13,18,5,14) then
+            drawBet(addBet({0}),13,18)
+          -- rows
+          elseif closeTo(xPos,yPos,87,18,8,14) then
+            local rowNum = math.floor((yPos-3)/10)
+            local bet = {}
+            for i = 3-rowNum, 12, 3 do
+              table.insert(bet, i)
+            end
+            drawBet(addBet(bet),87,10*rowNum+8)
+          elseif 31 <= yPos and yPos <= 34 and onMainBoard(xPos,yPos-3) then
+            -- halves
+            if math.abs(xPos-33)<=2 or math.abs(xPos-48)<=2 or math.abs(xPos-63)<=2 then
+              local colNum = math.floor((xPos-31)/15)
+              local bet = {}
+              for i=1,6 do
+                table.insert(bet, 3*colNum+i)
+              end
+              drawBet(addBet(bet),colNum*15+33,33)
+            -- columns
+            else
+              local colNum = math.floor((xPos-18)/15)
+              local bet = {}
+              for i=1,3 do
+                table.insert(bet, 3*colNum+i)
+              end
+              drawBet(addBet(bet),colNum*15+25,33)
+            end
+          elseif onMainBoard(xPos, yPos) then
+            -- horizontal intersections
+            if math.abs(yPos-13)<=2 or math.abs(yPos-23)<=2 then
+              local rowNum = math.floor((yPos-11)/10)
+              -- 4-way intersections
+              if math.abs(xPos-33)<=2 or math.abs(xPos-48)<=2 or math.abs(xPos-63)<=2 then
+                local colNum = math.floor((xPos-31)/15)
+                local tlNum = 3*colNum+3-rowNum
+                drawBet(addBet({tlNum-1,tlNum,tlNum+2,tlNum+3}),colNum*15+33,rowNum*10+13)
+              else
+                local colNum = math.floor((xPos-18)/15)
+                local tNum = 3*colNum+3-rowNum
+                drawBet(addBet({tNum-1,tNum}),colNum*15+25,rowNum*10+13)
+              end
+            -- vertical intersections
+            elseif math.abs(xPos-33)<=2 or math.abs(xPos-48)<=2 or math.abs(xPos-63)<=2 then
+              local colNum = math.floor((xPos-31)/15)
+              local rowNum = math.floor((yPos-3)/10)
+              local lNum = 3*colNum+3-rowNum
+              drawBet(addBet({lNum,lNum+3}),colNum*15+33,rowNum*10+8)
+            -- single numbers
+            else
+              local rowNum = math.floor((yPos-3)/10)
+              local colNum = math.floor((xPos-18)/15)
+              local num = 3*colNum+3-rowNum
+              drawBet(addBet({num}),colNum*15+25,rowNum*10+8)
+            end
+          elseif 36 <= yPos and yPos <= 42 then
+            -- black
+            if 9 <= xPos and xPos <= 21 then
+              local bet = {}
+              for i=1,12 do
+                if COLORS[i] == colors.black then
+                  table.insert(bet,i)
+                end
+              end
+              drawBet(addBet(bet),15,40)
+            -- even
+            elseif 25 <= xPos and xPos <= 51 then
+              local bet = {}
+              for i=2,12,2 do
+                table.insert(bet,i)
+              end
+              drawBet(addBet(bet),38,40)
+            -- odd
+            elseif 55 <= xPos and xPos <= 75 then
+              local bet = {}
+              for i=1,12,2 do
+                table.insert(bet,i)
+              end
+              drawBet(addBet(bet),65,40)
+            -- red
+            elseif 79 <= xPos and xPos <= 91 then
+              local bet = {}
+              for i=1,12 do
+                if COLORS[i] == colors.red then
+                  table.insert(bet,i)
+                end
+              end
+              drawBet(addBet(bet),85,40)
+            end
+          end
+        end
+      end
+    end
+  end
+end
+ 
+function spin(frame, bets)
+  resetScreen(top)
+  local idx = math.random(13)
+  local chosen = 0
+  if idx > 0 then
+    chosen = NUMBERS[idx]
+  end
+  table.insert(history,1,chosen)
+
+  local netWin = 0
+
+  if table.getn(history) > 5 then table.remove(history) end
+  for numstr,amount in pairs(bets) do
+    local breadth = 1
+    local i = 1
+    local c = ""
+    local n = 0
+    local won = false
+    while i <= numstr:len() do
+      c = numstr:sub(i,i)
+      if c == "," then
+        breadth = breadth + 1
+        if n == chosen then won = true end
+        n = 0
+      else
+        n = n * 10
+        n = n + tonumber(c)
+      end
+      i = i + 1
+    end
+    if n == chosen then won = true end
+    if won then
+      netWin = netWin + amount*(12/breadth-1)
+    else netWin = netWin - amount end
+  end
+
+  updateCardValue(netWin)
+ 
+  local ballt = 0
+  local ballspeed = math.pi/13
+  local BALLDEC = 0.001
+  local BALLIN = 0.2
+  local ballr = 30
+ 
+  local done = false
+  local t1 = os.startTimer(0)
+  while true do
+    event = { os.pullEvent() }
+    if event[1] == "timer" and event[2] == t1 then
+      t1 = os.startTimer(0.125)
+ 
+      if ballr > 19.6 then
+        ballr = ballr - BALLIN
+      elseif math.abs(ballt-(frame-1)*2*math.pi/FRAMES-(2*idx+1)*math.pi/13)<=math.pi/13 then
+        done = true         
+      end
+ 
+      if not done then 
+        ballt = ballt + ballspeed
+        if ballt >= 2*math.pi then ballt = ballt - 2*math.pi end
+        if ballspeed > 0.01 then
+          ballspeed = ballspeed - BALLDEC
+        end
+      end
+      frame = frame - 1
+      if frame < 1 then frame = frame + 30 end
+      drawWheel(top,frame,tw/2,th/2,done)
+      if done then
+        if netWin >= 0 then
+          imglib.centerWord(top,"+"..tostring(netWin),tw/2,th/2)
+        else
+          imglib.centerWord(top,tostring(netWin),tw/2,th/2)
+        end
+      else
+        imglib.centerImage(top,BALL,tw/2+ballr*math.cos(ballt),th/2-ballr*math.sin(ballt)/1.5)
+      end
+    elseif event[1] == "monitor_touch" and done then
+      resetScreen(top)
+      return chosen
+    end
+  end
+end
+ 
+function updateCardValue(dm)
+  local oldVal = getCardValue()
+  local file = fs.open("/disk/val", "w")
+  file.write(oldVal + dm)
+  file.close()
+end
+ 
+function getCardValue()
+  local file = fs.open("/disk/val","r")
+  if file then
+    local cardVal = tonumber(file.readLine())
+    file.close()
+    return cardVal
+  else
+    return -1
+  end  
+end
+ 
+function main()
+  WHEELS = imglib.loadImgs("/images/wheels",47)
+  BALL = imglib.loadImg("/images/ball")
+  for i=1,5 do
+    table.insert(history,math.random(13)-1)
+  end
+  while true do
+    startScreen()
+    placeBets()
+    turtle.suck()
+    turtle.dropDown()
+  end
+end
+ 
+main()
