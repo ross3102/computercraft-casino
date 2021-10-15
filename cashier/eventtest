@@ -1,0 +1,9 @@
+while true do
+  event = { os.pullEvent() }
+  if event[1] == "disk" then
+    print("hi")
+  elseif event[1] == "mouse_click" then
+    print("hello")
+    os.sleep(5)
+  end
+end

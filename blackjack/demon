@@ -1,0 +1,246 @@
+local monitor = peripheral.wrap("right")
+monitor.setTextScale(0.5)
+local mw, mh = monitor.getSize()
+ 
+local DMD = {}
+local HRT = {}
+local CLB = {}
+local SPD = {}
+local BACK = {}
+local VALS = {}
+local LETTERS = {}
+ 
+local SUITS = {}
+local VALUES = {"A","2","3","4","5",
+                "6","7","8","9","10",
+                "J","Q","K"}
+ 
+local colorChars = {["0"]=colors.white,
+                    ["1"]=colors.orange,
+                    ["2"]=colors.magenta,
+                    ["3"]=colors.lightBlue,
+                    ["4"]=colors.yellow,
+                    ["5"]=colors.lime,
+                    ["6"]=colors.pink,
+                    ["7"]=colors.gray,
+                    ["8"]=colors.lightGray,
+                    ["9"]=colors.cyan,
+                    ["a"]=colors.purple,
+                    ["b"]=colors.blue,
+                    ["c"]=colors.brown,
+                    ["d"]=colors.green,
+                    ["e"]=colors.red,
+                    ["f"]=colors.black}
+ 
+function pickupItem()
+  turtle.suckDown()
+  local itm = turtle.getItemDetail()
+  while itm do
+    if (itm.name == "ComputerCraft:disk") then
+      turtle.dropDown()
+      return true
+    else
+      turtle.dropUp()
+      turtle.suckDown()
+      itm = turtle.getItemDetail()
+    end
+  end
+  return false
+end
+ 
+function awaitDisk()
+  while true do
+    event,side = os.pullEvent("disk")
+    turtle.suckDown()
+    if pickupItem() then
+      return
+    end
+  end
+end
+ 
+function resetScreen()
+  local oldTerm = term.redirect(monitor)
+  paintutils.drawFilledBox(1,1,mw,mh,colors.green)
+  term.redirect(oldTerm)
+end
+ 
+function startScreen()
+  resetScreen()
+  drawLetter("R",2,2)
+  drawLetter("O",8,2)
+  drawLetter("S",14,2)
+  drawLetter("S",20,2)
+  os.pullEvent("monitor_touch")
+  drawLetter("M",2,8)
+  drawLetter("A",8,8)
+  drawLetter("I",14,8)
+  drawLetter("L",20,8)
+  os.pullEvent("monitor_touch")
+  drawLetter("Z",2,14)
+  drawLetter("I",8,14)
+  drawLetter("G",14,14)
+  drawLetter("Z",20,14)
+  drawLetter("Y",26,14)
+  drawLetter("I",32,14)
+  drawLetter("X",38,14)
+  drawLetter("M",44,14)
+  os.pullEvent("monitor_touch")
+  drawWord("zigzyixm",2,20)
+  os.pullEvent("monitor_touch")
+  drawWord("mail",2,26)
+end
+ 
+function centerText(text, y)
+  monitor.setCursorPos(math.floor((mw/2)-(text:len()/2)+1),y)
+  monitor.write(text)
+end
+ 
+function main()
+  DMD = loadImg("/images/diamond")
+  HRT = loadImg("/images/heart")
+  CLB = loadImg("/images/club")
+  SPD = loadImg("/images/spade")
+  SUITS = {DMD,HRT,CLB,SPD}
+  BACK = loadImg("/images/cardback")
+  VALS = loadImgs("/images/values",5)
+  LETTERS = loadImgs("/images/letters",5)
+  while true do
+    parallel.waitForAll(awaitDisk, startScreen)
+    showProfilePic()
+  end
+end
+
+function loadImgs(fn,nl)
+  local imgs = {}
+
+  local file = fs.open(fn, "r")
+
+  local line = file.readLine()
+
+  while (line ~= nil) do
+    local img = {lines={},
+                 width=0}
+    
+    for l = 1, nl do
+      img.width = math.max(img.width, line:len())
+      table.insert(img.lines, line)
+      line = file.readLine()
+    end
+    table.insert(imgs,img)
+  end
+
+  file.close()
+  return imgs
+end
+
+function loadImg(fn)
+  local img = {lines={},
+               width=0}
+
+  local file = fs.open(fn, "r")
+
+  local line = file.readLine()
+  
+  while (line ~= nil) do
+    img.width = math.max(img.width, line:len())
+    table.insert(img.lines, line)
+    line = file.readLine()
+  end
+
+  file.close()
+  return img
+end
+
+function drawImage(img, x, y)
+  local oldTerm = term.redirect(monitor)
+  local l = 1
+
+  for l,line in ipairs(img.lines) do
+    for i = 1, line:len() do
+      local c = colorChars[line:sub(i,i)]
+      if c ~= nil then
+        paintutils.drawPixel(x+i-1,y+l-1,c)
+      end
+    end
+  end
+  
+  term.redirect(oldTerm)
+end
+ 
+function drawNumber(val,x,y)
+  local i = 0
+  
+  if val == "A" then i = 1
+  elseif val == "J" then i = 11
+  elseif val == "Q" then i = 12
+  elseif val == "K" then i = 13
+  else i = tonumber(val)
+  end
+  
+  drawImage(VALS[i],x,y)
+end
+ 
+function drawFacedownCard(x, y)
+  drawCard("F", nil, x, y)
+end
+ 
+function drawCard(val, suit, x, y)
+  local oldTerm = term.redirect(monitor)
+  
+  paintutils.drawLine(x+1,y,x+10,y,colors.black)
+  paintutils.drawLine(x,y+1,x,y+13,colors.black)
+  paintutils.drawLine(x+1,y+14,x+10,y+14,colors.black)
+  paintutils.drawLine(x+11,y+1,x+11,y+13,colors.black)
+  if val == "F" then
+    drawImage(BACK,x+1,y+1)
+  else
+    paintutils.drawFilledBox(x+1,y+1,x+10,y+13,colors.white)
+    drawImage(suit,x+5,y+2)
+ 
+    drawNumber(val,x+2,y+8)
+  end
+  
+  term.redirect(oldTerm)
+end
+ 
+function drawLetter(l, x, y)
+  local i = string.byte(string.lower(l)) - string.byte("a") + 1
+  local lImg = LETTERS[i]
+  drawImage(lImg,x,y)
+  return lImg.width
+end
+ 
+function drawWord(w, x, y)
+  local width = 0
+  for i = 1, w:len() do
+    width = width + 1 + drawLetter(w:sub(i,i),x+width,y)
+  end
+  return math.max(width - 1, 0)
+end
+ 
+function showProfilePic()
+  resetScreen()
+  local oldTerm = term.redirect(monitor)
+  
+  drawWord("Welcome", mw/2-18, 4)
+  
+  drawImage(loadImg("/disk/pic"), math.floor(mw/2-27/2), math.floor(mh/2-18/2))
+  
+  paintutils.drawFilledBox(30,41,50,47,colors.blue)
+  
+  drawWord("done", 31, 42)
+   
+  term.redirect(oldTerm)
+  
+  while true do
+    event,side,xPos,yPos = os.pullEvent("monitor_touch")
+    if (30 <= xPos and xPos <= 50 and 42 <= yPos and yPos <= 46) then
+      turtle.suckDown()
+      turtle.dropUp()
+      resetScreen()
+      return
+    end
+  end
+end
+ 
+main()

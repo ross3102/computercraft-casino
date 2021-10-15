@@ -1,0 +1,3 @@
+file = fs.open("/disk/val","w")
+file.write("")
+file.close()

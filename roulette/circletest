@@ -1,0 +1,35 @@
+os.loadAPI("imglib")
+
+local top = peripheral.wrap("top")
+local bot = peripheral.wrap("front")
+local bw, bh = bot.getSize()
+term.redirect(bot)
+
+term.setBackgroundColor(colors.green)
+term.setTextColor(colors.white)
+term.clear()
+
+local th = 0
+local r1 = 15
+local r2 = 35
+local nr = 3/4
+
+imglib.drawSector(bot,50,26,0,r1,0,2*math.pi,colors.yellow)
+while true do
+  --paintutils.drawFilledBox(1,1,bw,bh,colors.green)
+  local c = colors.red
+    
+  imglib.drawSector(bot,50,26,r1+1,r2,th,th+2*math.pi/13,colors.lime)
+  imglib.centerWord(bot,"0",50+nr*r2*math.cos(th+math.pi/13),26-nr*r2*math.sin(th+math.pi/13)/1.5,colors.white)
+
+  for i=1,12 do
+    imglib.drawSector(bot,50,26,r1+1,r2,th+i*2*math.pi/13,th+(i+1)*2*math.pi/13,c)
+    imglib.centerWord(bot,tostring(i),math.floor(50+nr*r2*math.cos(th+i*2*math.pi/13+math.pi/13)+0.5),math.floor(26-nr*r2*math.sin(th+2*i*math.pi/13+math.pi/13)/1.5+0.5),colors.white)
+    if c == colors.red then c = colors.black
+    else c = colors.red end
+  end
+
+  --imglib.drawSector(bot,50,26,15,0,2*math.pi,colors.yellow)
+  th = th+0.2
+  os.sleep(0.125)
+end

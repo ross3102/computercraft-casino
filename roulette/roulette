@@ -353,6 +353,9 @@ function placeBets()
               drawBet(addBet(bet),85,40)
             end
           end
+          -- for s,v in pairs(bets) do
+          --   print(s..":"..v)
+          -- end
         end
       end
     end
@@ -412,7 +415,7 @@ function spin(frame, bets)
  
       if ballr > 19.6 then
         ballr = ballr - BALLIN
-      elseif math.abs(ballt-(frame-1)*2*math.pi/FRAMES-(2*idx+1)*math.pi/13)<=math.pi/13 then
+      elseif math.abs(ballt-(frame-1)*2*math.pi/FRAMES-(2*idx+1)*math.pi/13)<=2*math.pi/13 then
         done = true         
       end
  

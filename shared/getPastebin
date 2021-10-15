@@ -1,0 +1,1 @@
+local r = http.get("https://pastebin.com/raw/jCfCfBPn"); local f = fs.open( shell.resolve( "pastebin" ), "w" ); f.write( r.readAll() ); f.close(); r.close()
