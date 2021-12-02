@@ -4,4 +4,4 @@ Code for a casino built in Minecraft using the Computercraft mod containing a ca
 
 Idea and blackjack UI heavily inspired by [Twitch - Ottomated](http://twitch.tv/Ottomated), but all code is original.
 
-Also includes a limited custom image library
+Also includes a custom image library
